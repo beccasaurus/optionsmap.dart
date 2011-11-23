@@ -9,16 +9,26 @@ class OptionsMap {
 
   List<String> arguments;
 
+  Map<String,String> _aliases;
+
   OptionsMap([List<String> arguments = null]) {
     this.arguments = (arguments == null) ? new Options().arguments : arguments;
+    _aliases = new HashMap<String,String>();
+  }
+
+  OptionsMap alias(String key1, String key2) {
+    _aliases[key1] = key2;
+    return this;
   }
 
   // Builds a new map each time, based on the current argumetns (and config).
   // We'll memoize this (and expire on config/arg changes) in the future.
+  // We may or may not keep this public ... recommend making it private, atleast for now?
   Map<String,List> get map() {
     var theMap      = new HashMap<String,List>();
     var currentName = null;
     var setValue    = (key, value) {
+      key = _getRealKeyName(key);
       theMap.putIfAbsent(key, ()=>[]);
       theMap[key].add(value);
     };
@@ -43,12 +53,21 @@ class OptionsMap {
     return theMap;
   }
 
+  // Handles mapping key names to their aliases to get the 
+  // "real" key that we store in our map for these arguments.
+  String _getRealKeyName(String key) {
+    if (key === null) return key;
+    return (_aliases.containsKey(key)) ? _getRealKeyName(_aliases[key]) : key;
+  }
+
   Dynamic getArgument([String name = null]) {
     List arguments = getArguments(name);
     return (arguments.length > 0) ? arguments[0] : null;
   }
 
+  // TODO are we using "name" or "key" or what?  Make up your mind!  And FIXME  :)
   Dynamic getArguments([String name = null]) {
+    name = _getRealKeyName(name);
     if (name == null) name = defaultArgumentName;
     if (map.containsKey(name))
       return map[name];
