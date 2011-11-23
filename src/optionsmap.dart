@@ -11,6 +11,8 @@ class OptionsMap {
 
   List<String> arguments;
 
+  bool parseValues = true;
+
   Map<String,String> _aliases;
 
   OptionsMap([List<String> arguments = null]) {
@@ -93,6 +95,8 @@ class OptionsMap {
   }
 
   Dynamic _parse(String argument) {
+    if (parseValues == false) return argument;
+
     if (parseDoublePattern.hasMatch(argument))
       return Math.parseDouble(argument);
     else if (parseIntPattern.hasMatch(argument))
