@@ -4,10 +4,18 @@
 
 #source("support/my_expectations.dart");
 #source("options_map_spec.dart");
+#source("parsing_values_spec.dart");
+#source("alias_spec.dart");
+#source("default_spec.dart");
 
 main() {
   Expectations.onExpect((target) => new MyExpectations(target));
-  Bullseye.run([new OptionsMapSpec()]);
+  Bullseye.run([
+    new OptionsMapSpec(),
+    new ParsingValuesSpec(),
+    new AliasSpec(),
+    new DefaultSpec()
+  ]);
 }
 
 class Spec extends BullseyeSpec {

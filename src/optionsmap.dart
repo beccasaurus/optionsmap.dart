@@ -5,6 +5,8 @@
 // Note: you should also be able to getArgument (first value or null) or getArguments (array of all values).
 class OptionsMap {
   static final RegExp argumentNamePattern = const RegExp(@"^-{1,2}([^=]*)(=.*)?");
+  static final RegExp parseIntPattern     = const RegExp(@"^\d+$");
+  static final RegExp parseDoublePattern  = const RegExp(@"^\d+\.\d+$");
   static final String defaultArgumentName = "_";
 
   List<String> arguments;
@@ -30,7 +32,7 @@ class OptionsMap {
     var setValue    = (key, value) {
       key = _getRealKeyName(key);
       theMap.putIfAbsent(key, ()=>[]);
-      theMap[key].add(value);
+      theMap[key].add(_parse(value));
     };
 
     for (String arg in arguments) {
@@ -51,13 +53,6 @@ class OptionsMap {
     }
 
     return theMap;
-  }
-
-  // Handles mapping key names to their aliases to get the 
-  // "real" key that we store in our map for these arguments.
-  String _getRealKeyName(String key) {
-    if (key === null) return key;
-    return (_aliases.containsKey(key)) ? _getRealKeyName(_aliases[key]) : key;
   }
 
   Dynamic getArgument([String name = null]) {
@@ -88,5 +83,21 @@ class OptionsMap {
     }
 
     super.noSuchMethod(methodName, arguments);
+  }
+
+  // Handles mapping key names to their aliases to get the 
+  // "real" key that we store in our map for these arguments.
+  String _getRealKeyName(String key) {
+    if (key === null) return key;
+    return (_aliases.containsKey(key)) ? _getRealKeyName(_aliases[key]) : key;
+  }
+
+  Dynamic _parse(String argument) {
+    if (parseDoublePattern.hasMatch(argument))
+      return Math.parseDouble(argument);
+    else if (parseIntPattern.hasMatch(argument))
+      return Math.parseInt(argument);
+    else
+      return argument;
   }
 }
