@@ -4,10 +4,10 @@
 // Note: you should be able to get the raw Map that we create, so you can deal with collisions if/when they happen.
 // Note: you should also be able to getArgument (first value or null) or getArguments (array of all values).
 class OptionsMap {
-  static final RegExp argumentNamePattern = const RegExp(@"^-{1,2}([^=]*)(=.*)?");
-  static final RegExp parseIntPattern     = const RegExp(@"^\d+$");
-  static final RegExp parseDoublePattern  = const RegExp(@"^\d+\.\d+$");
-  static final String defaultArgumentName = "_";
+  static final RegExp argumentNamePattern    = const RegExp(@"^-{1,2}([^=]*)(=.*)?");
+  static final RegExp parseIntPattern        = const RegExp(@"^\d+$");
+  static final RegExp parseDoublePattern     = const RegExp(@"^\d+\.\d+$");
+  static final String defaultArgumentName    = "_";
 
   List<String> arguments;
 
@@ -96,6 +96,7 @@ class OptionsMap {
     if (methodName.startsWith("get:")) {
       var name = methodName.substring(4);
       if (name.startsWith("_@")) name = defaultArgumentName; // hack for ._
+      name = _findNameFromMethod(name);
       var arguments = getArguments(name);
       switch (arguments.length) {
         case 0:  return isBoolean(name) ? false : null;
@@ -130,4 +131,19 @@ class OptionsMap {
     else
       return argument;
   }
+
+  String _findNameFromMethod(String originalName) {
+    if (map.isEmpty() || map.containsKey(originalName))
+      return originalName;
+
+    String withoutPunctuation = _withoutPunctuation(originalName);
+    for (String key in map.getKeys())
+      if (_withoutPunctuation(key) == withoutPunctuation)
+        return key;
+
+    return originalName;
+  }
+
+  // String.replace[All] isn't implemented with Regexp yet  :/
+  _withoutPunctuation(String str) => str.replaceAll("-", "").replaceAll("_", "");
 }

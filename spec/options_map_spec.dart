@@ -33,6 +33,19 @@ class OptionsMapSpec extends Spec {
         expect(options._).equalsSet(["foo", "bar"]);
       });
 
+      it("converts dashes in key names to underscores (just in noSuchMethod)", (){
+        options.arguments = ["--a-b-c", "foo", "--d_e_f", "bar"];
+
+        expect(options.getArgument("a-b-c")) == "foo";
+        expect(options.getArgument("d_e_f")) == "bar";
+
+        expect(options.getArgument("a_b_c")) == null;
+        expect(options.getArgument("d-e-f")) == null;
+
+        expect(options.a_b_c) == "foo";
+        expect(options.d_e_f) == "bar";
+      });
+
       exampleArguments(["--foo=bar", "--foo bar"], (args) {
         options.arguments = args;
         expect(options.getArguments()).isEmpty();
