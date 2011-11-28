@@ -55,6 +55,16 @@ class OptionsMap {
     };
 
     for (String arg in arguments) {
+
+      if (arg.startsWith("--no-") && arg.length > 5) {
+        String name = arg.substring(5);
+        if (isBoolean(name)) {
+          setValue(name, false);
+          currentName = null;
+          continue;
+        }
+      }
+
       if (currentName == null) {
         var match = argumentNamePattern.firstMatch(arg);
         if (match == null) { // This isn't a named argument.  Add it to the unnamed args.

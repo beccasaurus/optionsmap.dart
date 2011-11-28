@@ -54,8 +54,35 @@ class BooleanSpec extends Spec {
       expect(options._).equalsSet(["hello", "world"]);
     });
 
-    it("can pass false values (which is useful is the default is set to true)", (){
-      pending("need to implement default() before we can test this, so we can set the default to true");
+    it("can pass false values (--no-foo)", (){
+      options.boolean("foo");
+      expect(options.foo) == false;
+
+      options.defaults("foo", true);
+      expect(options.foo) == true;
+
+      options.arguments = ["--no-foo"];
+      expect(options.foo) == false;
+
+      options.arguments = ["--foo"];
+      expect(options.foo) == true;
+    });
+
+    it("can pass false values with aliases (-no-f)", (){
+      options.boolean("foo").alias("f", "foo");
+      expect(options.f) == false;
+
+      options.defaults("f", true);
+      expect(options.f)   == true;
+      expect(options.foo) == true;
+
+      options.arguments = ["--no-f"];
+      expect(options.f)   == false;
+      expect(options.foo) == false;
+
+      options.arguments = ["--foo"];
+      expect(options.f)   == true;
+      expect(options.foo) == true;
     });
   }
 }
