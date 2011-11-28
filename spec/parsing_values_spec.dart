@@ -1,10 +1,6 @@
 class ParsingValuesSpec extends Spec {
-  OptionsMap options;
-
   spec() {
     
-    before((){ options = new OptionsMap([]); });
-
     // TODO - parse arguments into custom/complex objects? --dog rover, eg. could become a <Dog @name="rover">.
     //        if we do this, i want to make a callback (which the int/double parsers should use) that you can hook into.
 

@@ -1,9 +1,5 @@
 class AliasSpec extends Spec {
-  OptionsMap options;
-
   spec() {
-    
-    before((){ options = new OptionsMap([]); });
 
     it("alias('f', 'foo')", (){
       options = new OptionsMap([]).alias("f", "foo");

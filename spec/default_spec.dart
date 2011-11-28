@@ -1,10 +1,6 @@
 class DefaultSpec extends Spec {
-  OptionsMap options;
-
   spec() {
     
-    before((){ options = new OptionsMap([]); });
-
     before((){
       expect(options.foo) == null;
       expect(options.getArgument("foo")) == null;

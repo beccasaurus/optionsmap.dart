@@ -20,9 +20,20 @@ main() {
   ]);
 }
 
+/** Simple base class for all of our specs (with helpers, etc). */
 class Spec extends BullseyeSpec {
-  // Given a list of example arguments (eg. ["-f", "--foo bar"]), this creates 
-  // and it() for each example and runs your provided function against each it().
+  OptionsMap options;
+
+  // This is icky.  Better way?  Improve in Bullseye!
+  defineTestFixture() {
+    before((){
+      options = new OptionsMap([]);
+    });
+    super.defineTestFixture();
+  }
+
+  /** Given a list of example arguments (eg. ["-f", "--foo bar"]), this creates 
+      and it() for each example and runs your provided function against each it(). */
   exampleArguments(List examples, void fn(List<String> arguments)) {
     for (var example in examples) {
       it(objectToString(example), (){
@@ -33,6 +44,7 @@ class Spec extends BullseyeSpec {
   }
 }
 
+/** Simple helper for printing out objects as strings to aid in debugging/tracing/etc. */
 String objectToString(var object) {
   String text = "";
   List toJoin = [];

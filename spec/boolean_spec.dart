@@ -1,9 +1,5 @@
 class BooleanSpec extends Spec {
-  OptionsMap options; // TODO after this spec, let's refactor this into our Spec baseclass cuz, jeez, we use it everywhere!  (same as the before block)
-
   spec() {
-    
-    before((){ options = new OptionsMap([]); });
 
     it("defaults boolean argument values to false (instead of null)", (){
       expect(options.foo) == null;
