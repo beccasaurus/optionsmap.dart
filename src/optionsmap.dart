@@ -1,28 +1,51 @@
 #library("optionsmap");
 
+/**
+  *
+  *
+  *
+  *
+  */
 class OptionsMap {
   static final RegExp argumentNamePattern    = const RegExp(@"^-{1,2}([^=]*)(=.*)?");
   static final RegExp parseIntPattern        = const RegExp(@"^\d+$");
   static final RegExp parseDoublePattern     = const RegExp(@"^\d+\.\d+$");
   static final String defaultArgumentName    = "_";
 
-  /** Returns the raw arguments used to instantiate this 
-      OptionMap (or the default command line arguments). */
-  List<String> arguments;
+  bool                 _parseValues = true;
+  List<String>         _arguments;
+  Map<String,String>   _aliases;
+  Map<String,List>     _defaults;
+  List<String>         _booleans;
+  HashMap<String,List> _cache;
 
-  /** If set to false, [:String:] arguments that look like 
-      numbers are not parsed into numbers. */
-  bool parseValues = true;
-
-  Map<String,String>  _aliases;
-  Map<String,List>    _defaults;
-  List<String>        _booleans;
-
+  /**
+    *
+    */
   OptionsMap([List<String> arguments = null]) {
-    this.arguments = (arguments == null) ? new Options().arguments : arguments;
     _aliases  = new HashMap<String,String>();
     _defaults = new HashMap<String,List>();
     _booleans = new List<String>();
+
+    this.arguments = (arguments == null) ? new Options().arguments : arguments;
+  }
+
+  /** If set to false, [:String:] arguments that look like 
+      numbers are not parsed into numbers. */
+  bool get parseValues() => _parseValues;
+
+  void set parseValues(bool value) {
+    _clearCache();
+    _parseValues = value;
+  }
+
+  /** Returns the raw arguments used to instantiate this 
+      OptionMap (or the default command line arguments). */
+  List<String> get arguments() => _arguments;
+
+  void set arguments(List<String> arguments) {
+    _clearCache();
+    _arguments = arguments;
   }
 
   /** Aliases a [:newName:] to an [:existingName:] eg. [:alias("f", "foo"):].
@@ -35,6 +58,7 @@ class OptionsMap {
     *       argument name, you should do this *after* calling [alias].
     */
   OptionsMap alias(String newName, String existingName) {
+    _clearCache();
     _aliases[newName] = existingName;
     return this;
   }
@@ -45,6 +69,7 @@ class OptionsMap {
     * eg. [:--foo:].  You can also call [:--no-foo:] to explicitly set the argument 
     * value to [:false:] (useful if it [defaults] to [:true:]). */
   OptionsMap boolean(String argumentName) {
+    _clearCache();
     _booleans.add(_key(argumentName));
     return this;
   }
@@ -55,6 +80,7 @@ class OptionsMap {
   /** Sets a default value for the given argument name.  May be a single value or 
     * a [:List:] of values (as arguments may have multiple values). */
   OptionsMap defaults(String key, Dynamic defaultValue) {
+    _clearCache();
     _defaults[_key(key)] = (defaultValue is List) ? defaultValue : [defaultValue];
     return this;
   }
@@ -104,20 +130,28 @@ class OptionsMap {
     super.noSuchMethod(methodName, arguments);
   }
 
-  // private
+  // ----- private -----
 
-  // TODO clean me up, I'm sad.
-  Map<String,List> get _map() {
-    var theMap      = new HashMap<String,List>();
+  _clearCache(){ _cache = null; }
+
+  HashMap<String,List> get _map() {
+    if (_cache == null) _cache = _generateNewMap();
+    return _cache;
+  }
+
+  // TODO clean this up
+  HashMap<String,List> _generateNewMap() {
+    HashMap<String,List> map = new HashMap<String,List>();
     var currentName = null;
     var setValue    = (key, value) {
       key = _key(key);
-      theMap.putIfAbsent(key, ()=>[]);
-      theMap[key].add(_parse(value));
+      map.putIfAbsent(key, ()=>[]);
+      map[key].add(_parse(value));
     };
 
     for (String arg in arguments) {
 
+      // handle --no-foo arguments (for explicitly true booleans)
       if (arg.startsWith("--no-") && arg.length > 5) {
         String name = arg.substring(5);
         if (isBoolean(name)) {
@@ -129,24 +163,28 @@ class OptionsMap {
 
       if (currentName == null) {
         var match = argumentNamePattern.firstMatch(arg);
-        if (match == null) { // This isn't a named argument.  Add it to the unnamed args.
+        if (match == null) {
+          // This isn't a named argument.  Add it to the unnamed args.
           setValue(defaultArgumentName, arg);
-        } else if (match[2] != null && match[2].length > 0) { // This is a name and value, eg. --foo=bar
+        } else if (match[2] != null && match[2].length > 0) {
+          // This is a name and value, eg. --foo=bar
           setValue(match[1], match[2].substring(1));
         } else {
+          // This is the name of an argument.  Store it in currentName (unless it's a boolean).
           currentName = match[1];
           if (isBoolean(currentName)) {
             setValue(currentName, true);
             currentName = null;
           }
         }
-      } else { // The previous argument was a name, so this is a value.
+      } else {
+        // The previous argument was a name, so this is a value.
         setValue(currentName, arg);
         currentName = null;
       }
     }
 
-    return theMap;
+    return map;
   }
 
   /** Returns the real, private key that we use to store the given argument in our Map. */
