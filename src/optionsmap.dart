@@ -44,8 +44,8 @@ class OptionsMap {
     * To set a boolean value to [:true:], simply call your program with the argument 
     * eg. [:--foo:].  You can also call [:--no-foo:] to explicitly set the argument 
     * value to [:false:] (useful if it [defaults] to [:true:]). */
-  OptionsMap boolean(String key) {
-    _booleans.add(_key(key));
+  OptionsMap boolean(String argumentName) {
+    _booleans.add(_key(argumentName));
     return this;
   }
 
@@ -59,21 +59,35 @@ class OptionsMap {
     return this;
   }
 
+  /** Returns the value of the given argument name (or null).
+    *
+    * Note: If the given argument has multiple values, only the first value will be returned. */
   Dynamic getArgument([String name = null]) {
     List arguments = getArguments(name);
     return (arguments.length > 0) ? arguments[0] : null;
   }
 
-  // TODO are we using "name" or "key" or what?  Make up your mind!  And FIXME  :)
-  Dynamic getArguments([String name = null]) {
-    name = _key(name);
-    if (name == null) name = defaultArgumentName;
-    if (_map.containsKey(name))
-      return _map[name];
+  /** Returns a [:List:] of all of the value for the given argument name. 
+    *
+    * If the arguments are [:--foo 5:] then [:getArguments("foo"):] would return [:[5]:] 
+    * but, if multiple [:--foo:] values are passed, they will all be returned in this list. */
+  Dynamic getArguments([String argumentName = null]) {
+    argumentName = _key(argumentName);
+    if (argumentName == null) argumentName = defaultArgumentName;
+    if (_map.containsKey(argumentName))
+      return _map[argumentName];
     else
-      return _getDefault(name);
+      return _getDefault(argumentName);
   }
 
+  /** Allows you to call [:options.foo:] and get the value of the [:foo:] argument (or null). 
+    *
+    * This is very similar to calling [getArgument] or [getArguments] except:
+    *
+    *  - if only 1 value has been provided for the argument, this returns that value
+    *  - if more than 1 vale has been provided, this returns a [:List:] of the provided values
+    *  - if no value has been set for this argument, this returns [:null:]
+    */
   void noSuchMethod(String methodName, List arguments) {
     if (methodName.startsWith("get:")) {
       var name = methodName.substring(4);
@@ -92,6 +106,7 @@ class OptionsMap {
 
   // private
 
+  // TODO clean me up, I'm sad.
   Map<String,List> get _map() {
     var theMap      = new HashMap<String,List>();
     var currentName = null;
@@ -134,40 +149,49 @@ class OptionsMap {
     return theMap;
   }
 
-  String _key(String key) {
-    if (key === null) return key;
-    return (_aliases.containsKey(key)) ? _key(_aliases[key]) : key;
+  /** Returns the real, private key that we use to store the given argument in our Map. */
+  String _key(String argumentName) {
+    if (argumentName === null) return key;
+    return (_aliases.containsKey(argumentName)) ? _key(_aliases[argumentName]) : argumentName;
   }
 
-  Dynamic _getDefault(String key) {
-    key = _key(key);
-    return _defaults.containsKey(key) ? _defaults[key] : [];
+  /** Returnst he default value for this argument (as a [:List:] to be returned from [getArguments]). */
+  Dynamic _getDefault(String argumentName) {
+    argumentName = _key(argumentName);
+    return _defaults.containsKey(argumentName) ? _defaults[argumentName] : [];
   }
 
-  Dynamic _parse(argument) {
-    if (parseValues == false)   return argument;
-    if (! (argument is String)) return argument; // for now, we only parse strings
+  /** Given a raw argument value (String or null), this looks to see if the given argument 
+    * looks like a number and, if so, parses it as a number and returns the number. */
+  Dynamic _parse(Dynamic argumentValue) {
+    if (parseValues == false)   return argumentValue;
+    if (! (argumentValue is String)) return argumentValue; // for now, we only parse strings
 
-    if (parseDoublePattern.hasMatch(argument))
-      return Math.parseDouble(argument);
-    else if (parseIntPattern.hasMatch(argument))
-      return Math.parseInt(argument);
+    if (parseDoublePattern.hasMatch(argumentValue))
+      return Math.parseDouble(argumentValue);
+    else if (parseIntPattern.hasMatch(argumentValue))
+      return Math.parseInt(argumentValue);
     else
-      return argument;
+      return argumentValue;
   }
 
-  String _findNameFromMethod(String originalName) {
-    if (_map.isEmpty() || _map.containsKey(originalName))
-      return originalName;
+  /** Given the name of a method that triggered our [noSuchMethod] implementation, 
+    * this tries to find the value for that argument by trying an exact argument 
+    * name match first, then trying it again with all punctuation stripped out.
+    * This is necessary to allow [:--foo-bar:] to be accessible as [:options.foo_bar:]. */
+  String _findNameFromMethod(String methodName) {
+    if (_map.isEmpty() || _map.containsKey(methodName))
+      return methodName;
 
-    String withoutPunctuation = _withoutPunctuation(originalName);
+    String withoutPunctuation = _withoutPunctuation(methodName);
     for (String key in _map.getKeys())
       if (_withoutPunctuation(key) == withoutPunctuation)
         return key;
 
-    return originalName;
+    return methodName;
   }
 
-  // String.replace[All] isn't implemented with Regexp yet  :/
+  /** String.replace[All] isn't implemented with Regexp yet so this simply strips out 
+    * dashes and underscores from the given string (works for now). */
   _withoutPunctuation(String str) => str.replaceAll("-", "").replaceAll("_", "");
 }
