@@ -6,6 +6,7 @@
 #source("options_map_spec.dart");
 #source("parsing_values_spec.dart");
 #source("alias_spec.dart");
+#source("boolean_spec.dart");
 #source("default_spec.dart");
 
 main() {
@@ -14,6 +15,7 @@ main() {
     new OptionsMapSpec(),
     new ParsingValuesSpec(),
     new AliasSpec(),
+    new BooleanSpec(),
     new DefaultSpec()
   ]);
 }

@@ -38,7 +38,7 @@ class AliasSpec extends Spec {
       [options.foo, options.bar].forEach((val) => expect(val) == "hello BAR!");
     });
 
-    it("works if you chain aliases together", (){
+    it("is chainable", (){
       // Note: we're mapping f -> foo -> bar
       options = new OptionsMap([]).alias("f", "foo").alias("foo", "bar");
       [options.f, options.foo, options.bar].forEach((val) => expect(val) == null);
